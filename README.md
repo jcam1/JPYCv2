@@ -1,7 +1,7 @@
 # JPYC protocol's Overview
 
 ## Motivation
-We have a working protocol at the moment and to avoid confusion here we call it as the "previous JPYC". The "previous JPYC" is an ERC20 compatible token but it lacks some functionalities, e.g. upgradeability, etc for our current situation. We've made a decision to deploy JPYC protocol, with totally new smart contracts, for us to be ready to move on into the web3.0 world.    
+We have a working protocol at the moment and to avoid confusion here we call it as the "previous JPYC". The "previous JPYC" is an ERC20 compatible token but it lacks some functionalities, e.g. upgradeability, etc for our current situation. We've made a decision to deploy JPYC protocol, with totally new smart contracts, for us to be ready to move on into the web3.0 world. 
 
 Previous JPYC's information, white paper, and more can be found [here](https://jpyc.jp). 
 ## Brief introduction
@@ -13,25 +13,15 @@ JPYC protocol is an ERC20 compatible token. It allows minting of tokens by multi
 ## About solidity's version
 According to [Openzeppelin's recent update](https://github.com/OpenZeppelin/openzeppelin-contracts/commit/e192fac2769386b7d4b61a3541073ab47bb7723a) and [this contract's version](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/e192fac2769386b7d4b61a3541073ab47bb7723a/contracts/proxy/ERC1967/ERC1967Upgrade.sol#L17). We need to keep the solidity verion equal to or higher than `pragma solidity 0.8.2`. We decided to use the comparatively new version of `0.8.11`.
 ## Proxy
-### Comparison of upgradeable pattern
-<table>
-  <tr><th width="130">Upgrading Pattern</th><th width="450">Good</th><th width="450">Bad</th></tr>
-  <tr><td>UUPS</td><td>・Good gas efficiency </br>・More flexibility about the upgradeability when upgrade function is located in implementation</br>・Upgrade function can be customized（access control, Ownable）<br>・Proxy with less comlexity <br>・Upgradeability can be removed </td><td>・Has the risk of losing upgradeability if the upgrade function is not included</br>・Some bugs reported on github in the past<br>・More complexity in implementation</td></tr>
-   <tr><td>Transparent</td><td>・Longer history with many real examples</td><td>・Bad gas efficency<br>・More comlexity in proxy</td></tr>
-</table>
 
-- https://docs.openzeppelin.com/contracts/4.x/api/proxy#transparent-vs-uups
-- https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies
+### We went with UUPS proxy pattern
+In light of the current condition, we were hesitating between UUPS parxy and Transparent proxy patterns. In the end, With the reasons below, we've chosen UUPS pattern.
+- More simplicity in Proxy
+- Less gas fee for user
+- Higher flexibility for upgradeability
+- Recommended by openzeppelin team
 
-<br>
-
-
-![upgradeablePattern](./upgradeablePattern.drawio.svg)
-### Transparent Proxy Pattern
-
-Transparent proxy pattern is one of the most used upgradeable patterns in the industry and even OpenZeppelin's plugin uses it as a default way to deploy upgradeable contracts. But it has some disadvantages. That's why openzeppelin team's recommendation is shifting towards UUPS proxy pattern.   
-
-Transparent proxy pattern puts `upgradeTo(impl)` in the proxy contract. It could mean this pattern is vulnerable to "clash of fucntions" in proxy and implementation. In order to avoid it, in Transparent proxy pattern, not only `ifAdmin` modifier was implemented in the proxy contract but also admin address needs to be stored in proxy. As a result, gas efficiency becomes worse and comlexity increases. 
+Although on the way to make this decision, we have considered about other options like Transparent proxy patterns and EIP2535. 
 
 ### UUPS(EIP1822) Proxy Pattern
 https://eips.ethereum.org/EIPS/eip-1822   
@@ -43,15 +33,6 @@ UUPS proxies are implemented using an `ERC1967Proxy`. The proxy is not upgradeab
 - Implementation    
 UUPS's implementation includes the `upgradeTo` function by inheritting `UUPSUpgradeable`   contract. Then we can upgrade the implementation contract by calling the `upgradeTo` function.
 
-### Diamond(EIP2535)
-EIP2535, which is called "Diamonds" by the author, is a standard for creating modular smart contract systems that can be extended after deployment. Itself is quite powerful and vasatile but considering that it is not enoughly battle-tested we discarded this pattern.
-
-### We went with UUPS proxy pattern
-In light of the current condition, we were hesitating between UUPS parxy and Transparent proxy patterns. In the end, With the reasons below, we've chosen UUPS pattern.
-- More simplicity in Proxy
-- Less gas fee for user
-- Higher flexibility for upgradeability
-- Recommended by openzeppelin team
 ### Explanation of UUPS contract
 https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/proxy
 
@@ -151,99 +132,6 @@ The contract uses v, r and s to recover the address and verify that it matches t
 
 ### Note
 - We used `ERC1967Upgradeable.sol`’s code, but it is used partially because we selected UUPS upgradeable pattern. Functions like Beacon or Transparent pattern’s parts are not used in the current situation. We removed the unused parts.
-
-
-## How to start
-
-Install nodejs, refer to [nodejs](https://nodejs.org/en/)
-
-```
-git clone https://github.com/code-423n4/2022-02-jpyc.git
-
-cd 2022-02-jpyc
-
-npm i
-
-// test
-npx hardhat test
-// When specifying the path
-npx hardhat test test/direcotry/file
-
-// coverage
-npx hardhat coverage
-// When specifying the path
-npx hardhat coverage test/direcotry/file
-
-// contract-sizer
-npx hardhat size-contracts
-```
-## Used tools
-- hardhat
-  - https://hardhat.org/getting-started/
-- solidity-coverage
-  - https://www.npmjs.com/package/solidity-coverage
-- contract-sizer
-  - https://www.npmjs.com/package/hardhat-contract-sizer
-
-## test reference
-- Openzepplin test
-  - https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/test
-- Centre-tokens test
-  - https://github.com/centrehq/centre-tokens/tree/master/test
-
-### unit test
-- test/util/ECRecover.test.js
-
-### integration test
-- test/v1/FiatTokenV1.test.js
-  - test/v1/Initialize.behavior.js
-  - test/v1/ERC20.behavior.js
-  - test/v1/Blocklistable.behavior.js
-  - test/v1/Ownable.behavior.js
-  - test/v1/Pausable.behavior.js
-  - test/v1/Rescuable.behavior.js
-  - test/v1/EIP3009.behavior.js
-  - test/v1/EIP2612.behavior.js
-  - test/v1/FiatTokenV1.behavior.js
-  - test/v1/UUPSUpgradeable.behavior.js
-
-### functional test
-Test with proxy
-- test/v1_proxy/FiatTokenV1_proxy.test.js
-  - test/v1/Initialize.behavior.js
-  - test/v1/ERC20.behavior.js
-  - test/v1/Blocklistable.behavior.js
-  - test/v1/Ownable.behavior.js
-  - test/v1/Pausable.behavior.js
-  - test/v1/Rescuable.behavior.js
-  - test/v1/EIP3009.behavior.js
-  - test/v1/EIP2612.behavior.js
-  - test/v1/FiatTokenV1.behavior.js
-- test/storageSlot/storageSlot.test.js
-  - test/storageSlot/storageSlot.behavior.js
-- test/upgradeability/UUPSUpgradeable.test.js
-
-## USDCcontracts
-- USDCimple.sol
-- USDCmin.sol
-- USDCpro.sol
-- USDCupgrader.sol
-
-## Other README.md files
-If you want more information about how the contracts are forked or test files, see files below. 
-- contracts/README.md
-  - contract list
-- test/READEME.md
-  - test list
-
-## References
-[Openzeppelin's recent update](https://github.com/OpenZeppelin/openzeppelin-contracts/commit/e192fac2769386b7d4b61a3541073ab47bb7723a)   
-[EIP1967](https://eips.ethereum.org/EIPS/eip-1967)   
-[Transparent-vs-uups by Openzeppelin](https://docs.openzeppelin.com/contracts/4.x/api/proxy#transparent-vs-uups)    
-[the centre-tokens](https://github.com/centrehq/centre-tokens/tree/master/contracts )   
-[UUPS proxy pattern explanation](https://www.youtube.com/watch?v=kWUDTZhxKZI)   
-[EIP2535](https://eip2535diamonds.substack.com/p/introduction-to-the-diamond-standard)   
-[Unstructured storage pattern](https://blog.openzeppelin.com/upgradeability-using-unstructured-storage/)
 
 ## 📝 License
 
