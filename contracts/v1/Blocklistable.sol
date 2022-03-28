@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2018-2020 CENTRE SECZ
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +28,20 @@ pragma solidity 0.8.11;
 import "./Ownable.sol";
 
 /**
+ * @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v1/Blacklistable.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Change bool -> uint256 for gas optimization
+ * 3. Change blacklist -> blocklist
+ * 4. Add gap
+ */
+/**
  * @title Blocklistable Token
  * @dev Allows accounts to be blocklisted by a "blocklister" role
  */
 contract Blocklistable is Ownable {
     address public blocklister;
-    mapping(address => bool) internal blocklisted;
+    mapping(address => uint256) internal blocklisted;
 
     event Blocklisted(address indexed _account);
     event UnBlocklisted(address indexed _account);
@@ -55,7 +64,7 @@ contract Blocklistable is Ownable {
      */
     modifier notBlocklisted(address _account) {
         require(
-            !blocklisted[_account],
+            blocklisted[_account] == 0,
             "Blocklistable: account is blocklisted"
         );
         _;
@@ -64,9 +73,10 @@ contract Blocklistable is Ownable {
     /**
      * @dev Checks if account is blocklisted
      * @param _account The address to check
+     * @return True if account is blocklisted
      */
     function isBlocklisted(address _account) external view returns (bool) {
-        return blocklisted[_account];
+        return blocklisted[_account] == 1;
     }
 
     /**
@@ -74,7 +84,7 @@ contract Blocklistable is Ownable {
      * @param _account The address to blocklist
      */
     function blocklist(address _account) external onlyBlocklister {
-        blocklisted[_account] = true;
+        blocklisted[_account] = 1;
         emit Blocklisted(_account);
     }
 
@@ -83,7 +93,7 @@ contract Blocklistable is Ownable {
      * @param _account The address to remove from the blocklist
      */
     function unBlocklist(address _account) external onlyBlocklister {
-        blocklisted[_account] = false;
+        blocklisted[_account] = 0;
         emit UnBlocklisted(_account);
     }
 

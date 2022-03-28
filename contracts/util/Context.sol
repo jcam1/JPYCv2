@@ -10,6 +10,9 @@ pragma solidity 0.8.11;
  * manner, since when dealing with meta-transactions the account sending and
  * paying for execution may not be the actual sender (as far as an application
  * is concerned).
+ * @dev Forked from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4961a51cc736c7d4aa9bd2e11e4cbbaff73efee9/contracts/utils/Context.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
  *
  * This contract is only required for intermediate, library-like contracts.
  */

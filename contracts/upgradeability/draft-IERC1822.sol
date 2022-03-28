@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.x.0 (proxy/ERC1822/IProxiable.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.11;
 
 /**
  * @dev ERC1822: Universal Upgradeable Proxy Standard (UUPS) documents a method for upgradeability through a simplified

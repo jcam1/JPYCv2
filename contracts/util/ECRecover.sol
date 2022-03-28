@@ -26,6 +26,11 @@
 pragma solidity 0.8.11;
 
 /**
+ * @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/util/ECRecover.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ */
+/**
  * @title ECRecover
  * @notice A library that provides a safe ECDSA recovery function
  */

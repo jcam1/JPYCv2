@@ -48,73 +48,37 @@ contract FiatTokenV2 is
 {
     string public name;
     string public symbol;
-    uint8 public decimals;
     string public currency;
-    address public masterMinter;
-    bool internal initialized;
+    uint256 internal totalSupply_;
+    address public minterAdmin;
+    uint8 public decimals;
+    uint8 internal initializedVersion;
 
     mapping(address => uint256) internal balances;
     mapping(address => mapping(address => uint256)) internal allowed;
-    uint256 internal totalSupply_ = 0;
     mapping(address => bool) internal minters;
     mapping(address => uint256) internal minterAllowed;
-    // whitelist test
-    mapping(address => bool) internal whitelisted;
-    address public whitelister;
+    // allowlist test
+    uint256 public constant allowlistLimitAmount = 100000 * 1e18;
+    mapping(address => uint256) internal allowlisted;
+    address public allowlister;
 
     event Mint(address indexed minter, address indexed to, uint256 amount);
     event Burn(address indexed burner, uint256 amount);
     event MinterConfigured(address indexed minter, uint256 minterAllowedAmount);
     event MinterRemoved(address indexed oldMinter);
-    event MasterMinterChanged(address indexed newMasterMinter);
-    event Whitelisted(address indexed _account);
-    event UnWhitelisted(address indexed _account);
-    event WhitelisterChanged(address indexed newWhitelister);
+    event MinterAdminChanged(address indexed newMinterAdmin);
+    event Allowlisted(address indexed _account);
+    event UnAllowlisted(address indexed _account);
+    event AllowlisterChanged(address indexed newAllowlister);
 
-    function initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
-        string memory tokenCurrency,
-        uint8 tokenDecimals,
-        address newMasterMinter,
-        address newPauser,
-        address newBlocklister,
-        address newOwner
-    ) public {
-        require(!initialized, "FiatToken: contract is already initialized");
-        require(
-            newMasterMinter != address(0),
-            "FiatToken: new masterMinter is the zero address"
-        );
-        require(
-            newPauser != address(0),
-            "FiatToken: new pauser is the zero address"
-        );
-        require(
-            newBlocklister != address(0),
-            "FiatToken: new blocklister is the zero address"
-        );
-        require(
-            newOwner != address(0),
-            "FiatToken: new owner is the zero address"
-        );
-
-        name = tokenName;
-        symbol = tokenSymbol;
-        currency = tokenCurrency;
-        decimals = tokenDecimals;
-        masterMinter = newMasterMinter;
-        pauser = newPauser;
-        blocklister = newBlocklister;
-        _transferOwnership(newOwner);
-        blocklisted[address(this)] = true;
-        DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(name, "1");
-        CHAIN_ID = block.chainid;
-        NAME = name;
-        VERSION = "1";
-        initialized = true;
+    function initializeV2() public {
+        require(initializedVersion == 1);
+        initializedVersion = 2;
+        VERSION = "2";
+        DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(name, "2");
     }
-    
+
     /**
      * @dev Throws if called by any account other than a minter
      */
@@ -136,7 +100,7 @@ contract FiatTokenV2 is
         onlyMinters
         notBlocklisted(msg.sender)
         notBlocklisted(_to)
-        checkWhitelist(msg.sender, _amount)
+        checkAllowlist(msg.sender, _amount)
         returns (bool)
     {
         require(_to != address(0), "FiatToken: mint to the zero address");
@@ -157,12 +121,12 @@ contract FiatTokenV2 is
     }
 
     /**
-     * @dev Throws if called by any account other than the masterMinter
+     * @dev Throws if called by any account other than the minterAdmin
      */
-    modifier onlyMasterMinter() {
+    modifier onlyMinterAdmin() {
         require(
-            msg.sender == masterMinter,
-            "FiatToken: caller is not the masterMinter"
+            msg.sender == minterAdmin,
+            "FiatToken: caller is not the minterAdmin"
         );
         _;
     }
@@ -170,6 +134,7 @@ contract FiatTokenV2 is
     /**
      * @dev Get minter allowance for an account
      * @param minter The address of the minter
+     * @return Allowance of the minter can mint
      */
     function minterAllowance(address minter) external view returns (uint256) {
         return minterAllowed[minter];
@@ -178,6 +143,7 @@ contract FiatTokenV2 is
     /**
      * @dev Checks if account is a minter
      * @param account The address to check
+     * @return True if account is a minter
      */
     function isMinter(address account) external view returns (bool) {
         return minters[account];
@@ -201,6 +167,7 @@ contract FiatTokenV2 is
 
     /**
      * @dev Get totalSupply of token
+     * @return TotalSupply
      */
     function totalSupply() external view override returns (uint256) {
         return totalSupply_;
@@ -209,6 +176,7 @@ contract FiatTokenV2 is
     /**
      * @dev Get token balance of an account
      * @param account address The account
+     * @return Balance amount of the account
      */
     function balanceOf(address account)
         external
@@ -232,7 +200,7 @@ contract FiatTokenV2 is
         whenNotPaused
         notBlocklisted(msg.sender)
         notBlocklisted(spender)
-        checkWhitelist(msg.sender, value)
+        checkAllowlist(msg.sender, value)
         returns (bool)
     {
         _approve(msg.sender, spender, value);
@@ -250,8 +218,8 @@ contract FiatTokenV2 is
         address spender,
         uint256 value
     ) internal override {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "FiatToken: approve from the zero address");
+        require(spender != address(0), "FiatToken: approve to the zero address");
         allowed[owner][spender] = value;
         emit Approval(owner, spender, value);
     }
@@ -274,15 +242,15 @@ contract FiatTokenV2 is
         notBlocklisted(msg.sender)
         notBlocklisted(from)
         notBlocklisted(to)
-        checkWhitelist(from, value)
+        checkAllowlist(from, value)
         returns (bool)
     {
-        require(
-            value <= allowed[from][msg.sender],
-            "ERC20: transfer amount exceeds allowance"
-        );
+        uint256 _allowed = allowed[from][msg.sender];
+        if (_allowed != type(uint256).max) {
+            require(_allowed >= value, "FiatToken: transfer amount exceeds allowance");
+            allowed[from][msg.sender] = _allowed - value;
+        }
         _transfer(from, to, value);
-        allowed[from][msg.sender] = allowed[from][msg.sender] - value;
         return true;
     }
 
@@ -298,7 +266,7 @@ contract FiatTokenV2 is
         whenNotPaused
         notBlocklisted(msg.sender)
         notBlocklisted(to)
-        checkWhitelist(msg.sender, value)
+        checkAllowlist(msg.sender, value)
         returns (bool)
     {
         _transfer(msg.sender, to, value);
@@ -316,14 +284,15 @@ contract FiatTokenV2 is
         address to,
         uint256 value
     ) internal override {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
+        require(from != address(0), "FiatToken: transfer from the zero address");
+        require(to != address(0), "FiatToken: transfer to the zero address");
+        uint256 _balances = balances[from];
         require(
-            value <= balances[from],
-            "ERC20: transfer amount exceeds balance"
+            value <= _balances,
+            "FiatToken: transfer amount exceeds balance"
         );
 
-        balances[from] = balances[from] - value;
+        balances[from] = _balances - value;
         balances[to] = balances[to] + value;
         emit Transfer(from, to, value);
     }
@@ -337,7 +306,7 @@ contract FiatTokenV2 is
     function configureMinter(address minter, uint256 minterAllowedAmount)
         external
         whenNotPaused
-        onlyMasterMinter
+        onlyMinterAdmin
         returns (bool)
     {
         minters[minter] = true;
@@ -353,7 +322,7 @@ contract FiatTokenV2 is
      */
     function removeMinter(address minter)
         external
-        onlyMasterMinter
+        onlyMinterAdmin
         returns (bool)
     {
         minters[minter] = false;
@@ -384,13 +353,13 @@ contract FiatTokenV2 is
         emit Transfer(msg.sender, address(0), _amount);
     }
 
-    function updateMasterMinter(address _newMasterMinter) external onlyOwner {
+    function updateMinterAdmin(address _newMinterAdmin) external onlyOwner {
         require(
-            _newMasterMinter != address(0),
-            "FiatToken: new masterMinter is the zero address"
+            _newMinterAdmin != address(0),
+            "FiatToken: new minterAdmin is the zero address"
         );
-        masterMinter = _newMasterMinter;
-        emit MasterMinterChanged(masterMinter);
+        minterAdmin = _newMinterAdmin;
+        emit MinterAdminChanged(minterAdmin);
     }
 
     /**
@@ -404,7 +373,7 @@ contract FiatTokenV2 is
         whenNotPaused
         notBlocklisted(msg.sender)
         notBlocklisted(spender)
-        checkWhitelist(msg.sender, allowed[msg.sender][spender] + increment)
+        checkAllowlist(msg.sender, allowed[msg.sender][spender] + increment)
         returns (bool)
     {
         _increaseAllowance(msg.sender, spender, increment);
@@ -453,11 +422,12 @@ contract FiatTokenV2 is
         address spender,
         uint256 decrement
     ) internal override {
+        uint256 _allowed = allowed[owner][spender];
         require(
-            decrement <= allowed[owner][spender],
-            "ERC20: decreased allowance below zero"
+            decrement <= _allowed,
+            "FiatToken: decreased allowance below zero"
         );
-        _approve(owner, spender, allowed[owner][spender] - decrement);
+        _approve(owner, spender, _allowed - decrement);
     }
 
     /**
@@ -487,7 +457,7 @@ contract FiatTokenV2 is
         whenNotPaused
         notBlocklisted(from)
         notBlocklisted(to)
-        checkWhitelist(from, value)
+        checkAllowlist(from, value)
     {
         _transferWithAuthorization(
             from,
@@ -531,7 +501,7 @@ contract FiatTokenV2 is
         whenNotPaused
         notBlocklisted(from)
         notBlocklisted(to)
-        checkWhitelist(from, value)
+        checkAllowlist(from, value)
     {
         _receiveWithAuthorization(
             from,
@@ -588,7 +558,7 @@ contract FiatTokenV2 is
         whenNotPaused
         notBlocklisted(owner)
         notBlocklisted(spender)
-        checkWhitelist(owner, value)
+        checkAllowlist(owner, value)
     {
         _permit(owner, spender, value, deadline, v, r, s);
     }
@@ -600,17 +570,17 @@ contract FiatTokenV2 is
     {}
 
     /**
-     * @title Whitelistable Token
-     * @dev Allows accounts to be whitelisted by a "whitelister" role
+     * @title Allowlistable Token
+     * @dev Allows accounts to be allowlisted by a "allowlister" role
      */
 
     /**
-     * @dev Throws if called by any account other than the whitelister
+     * @dev Throws if called by any account other than the allowlister
      */
-    modifier onlyWhitelister() {
+    modifier onlyAllowlister() {
         require(
-            msg.sender == whitelister,
-            "Whitelistable: caller is not the whitelister"
+            msg.sender == allowlister,
+            "FiatToken: caller is not the allowlister"
         );
         _;
     }
@@ -620,49 +590,54 @@ contract FiatTokenV2 is
      * @param _account The address to check
      * @param _value The amount of token to check
      */
-    modifier checkWhitelist(address _account, uint256 _value) {
-        if (_value > 100000 * 10 ** 18) {
+    modifier checkAllowlist(address _account, uint256 _value) {
+        if (_value > allowlistLimitAmount) {
             require(
-                whitelisted[_account],
-                "Whitelistable: account is not whitelisted"
+                allowlisted[_account] == 1,
+                "FiatToken: account is not allowlisted"
             );
         }
         _;
     }
 
     /**
-     * @dev Checks if account is whitelisted
+     * @dev Checks if account is allowlisted
      * @param _account The address to check
+     * @return True if account is allowlisted
      */
-    function isWhitelisted(address _account) external view returns (bool) {
-        return whitelisted[_account];
+    function isAllowlisted(address _account) external view returns (bool) {
+        return allowlisted[_account] == 1;
     }
 
     /**
-     * @dev Adds account to whitelist
-     * @param _account The address to whitelist
+     * @dev Adds account to allowlist
+     * @param _account The address to allowlist
      */
-    function whitelist(address _account) external onlyWhitelister {
-        whitelisted[_account] = true;
-        emit Whitelisted(_account);
+    function allowlist(address _account)
+        external
+        whenNotPaused
+        onlyAllowlister
+    {
+        allowlisted[_account] = 1;
+        emit Allowlisted(_account);
     }
 
     /**
-     * @dev Removes account from whitelist
-     * @param _account The address to remove from the whitelist
+     * @dev Removes account from allowlist
+     * @param _account The address to remove from the allowlist
      */
-    function unWhitelist(address _account) external onlyWhitelister {
-        whitelisted[_account] = false;
-        emit UnWhitelisted(_account);
+    function unAllowlist(address _account) external onlyAllowlister {
+        allowlisted[_account] = 0;
+        emit UnAllowlisted(_account);
     }
 
-    function updateWhitelister(address _newWhitelister) external onlyOwner {
+    function updateAllowlister(address _newAllowlister) external onlyOwner {
         require(
-            _newWhitelister != address(0),
-            "Whitelistable: new whitelister is the zero address"
+            _newAllowlister != address(0),
+            "FiatToken: new allowlister is the zero address"
         );
-        whitelister = _newWhitelister;
-        emit WhitelisterChanged(whitelister);
+        allowlister = _newAllowlister;
+        emit AllowlisterChanged(allowlister);
     }
 
     uint256[50] private __gap;

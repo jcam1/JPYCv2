@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.0 (utils/Address.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.11;
 
 /**
  * @dev Collection of functions related to the address type
@@ -9,6 +9,9 @@ pragma solidity ^0.8.0;
 library Address {
     /**
      * @dev Returns true if `account` is a contract.
+     * @dev Forked from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4961a51cc736c7d4aa9bd2e11e4cbbaff73efee9/contracts/utils/Context.sol
+     * Modifications:
+     * 1. Change solidity version to 0.8.11
      *
      * [IMPORTANT]
      * ====

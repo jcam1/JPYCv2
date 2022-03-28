@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2018-2020 CENTRE SECZ
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +35,21 @@ import "./EIP2612.sol";
 import "../upgradeability/UUPSUpgradeable.sol";
 
 /**
+ * @dev ERC20 Token backed by fiat reserves. Forked from
+ * https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v1/FiatTokenV1.sol,
+ * https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v1.1/FiatTokenV1_1.sol,
+ * https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v2/FiatTokenV2.sol,
+ * https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v2/FiatTokenV2_1.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Use cashe for gas optimization
+ * 3. Let initialize function initialize a rescuer
+ * 4. Change materMinter -> minterAdmin
+ * 5. Use initializedVersion to manage the version
+ * 6. Check if the approved amount is max amount for gas optimization
+ */
+
+/**
  * @title FiatToken
  * @dev ERC20 Token backed by fiat reserves
  */
@@ -48,14 +64,14 @@ contract FiatTokenV1 is
 {
     string public name;
     string public symbol;
-    uint8 public decimals;
     string public currency;
-    address public masterMinter;
-    bool internal initialized;
+    uint256 internal totalSupply_;
+    address public minterAdmin;
+    uint8 public decimals;
+    uint8 internal initializedVersion;
 
     mapping(address => uint256) internal balances;
     mapping(address => mapping(address => uint256)) internal allowed;
-    uint256 internal totalSupply_ = 0;
     mapping(address => bool) internal minters;
     mapping(address => uint256) internal minterAllowed;
 
@@ -63,22 +79,26 @@ contract FiatTokenV1 is
     event Burn(address indexed burner, uint256 amount);
     event MinterConfigured(address indexed minter, uint256 minterAllowedAmount);
     event MinterRemoved(address indexed oldMinter);
-    event MasterMinterChanged(address indexed newMasterMinter);
+    event MinterAdminChanged(address indexed newMinterAdmin);
 
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         string memory tokenCurrency,
         uint8 tokenDecimals,
-        address newMasterMinter,
+        address newMinterAdmin,
         address newPauser,
         address newBlocklister,
+        address newRescuer,
         address newOwner
     ) public {
-        require(!initialized, "FiatToken: contract is already initialized");
         require(
-            newMasterMinter != address(0),
-            "FiatToken: new masterMinter is the zero address"
+            initializedVersion == 0,
+            "FiatToken: contract is already initialized"
+        );
+        require(
+            newMinterAdmin != address(0),
+            "FiatToken: new minterAdmin is the zero address"
         );
         require(
             newPauser != address(0),
@@ -89,6 +109,10 @@ contract FiatTokenV1 is
             "FiatToken: new blocklister is the zero address"
         );
         require(
+            newRescuer != address(0),
+            "FiatToken: new rescuer is the zero address"
+        );
+        require(
             newOwner != address(0),
             "FiatToken: new owner is the zero address"
         );
@@ -97,16 +121,17 @@ contract FiatTokenV1 is
         symbol = tokenSymbol;
         currency = tokenCurrency;
         decimals = tokenDecimals;
-        masterMinter = newMasterMinter;
+        minterAdmin = newMinterAdmin;
         pauser = newPauser;
         blocklister = newBlocklister;
+        rescuer = newRescuer;
         _transferOwnership(newOwner);
-        blocklisted[address(this)] = true;
-        DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(name, "1");
+        blocklisted[address(this)] = 1;
+        DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(tokenName, "1");
         CHAIN_ID = block.chainid;
-        NAME = name;
+        NAME = tokenName;
         VERSION = "1";
-        initialized = true;
+        initializedVersion = 1;
     }
 
     /**
@@ -150,12 +175,12 @@ contract FiatTokenV1 is
     }
 
     /**
-     * @dev Throws if called by any account other than the masterMinter
+     * @dev Throws if called by any account other than the minterAdmin
      */
-    modifier onlyMasterMinter() {
+    modifier onlyMinterAdmin() {
         require(
-            msg.sender == masterMinter,
-            "FiatToken: caller is not the masterMinter"
+            msg.sender == minterAdmin,
+            "FiatToken: caller is not the minterAdmin"
         );
         _;
     }
@@ -163,6 +188,7 @@ contract FiatTokenV1 is
     /**
      * @dev Get minter allowance for an account
      * @param minter The address of the minter
+     * @return Allowance of the minter can mint
      */
     function minterAllowance(address minter) external view returns (uint256) {
         return minterAllowed[minter];
@@ -171,6 +197,7 @@ contract FiatTokenV1 is
     /**
      * @dev Checks if account is a minter
      * @param account The address to check
+     * @return True if account is a minter
      */
     function isMinter(address account) external view returns (bool) {
         return minters[account];
@@ -194,6 +221,7 @@ contract FiatTokenV1 is
 
     /**
      * @dev Get totalSupply of token
+     * @return TotalSupply
      */
     function totalSupply() external view override returns (uint256) {
         return totalSupply_;
@@ -202,6 +230,7 @@ contract FiatTokenV1 is
     /**
      * @dev Get token balance of an account
      * @param account address The account
+     * @return Balance amount of the account
      */
     function balanceOf(address account)
         external
@@ -242,8 +271,8 @@ contract FiatTokenV1 is
         address spender,
         uint256 value
     ) internal override {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "FiatToken: approve from the zero address");
+        require(spender != address(0), "FiatToken: approve to the zero address");
         allowed[owner][spender] = value;
         emit Approval(owner, spender, value);
     }
@@ -268,12 +297,12 @@ contract FiatTokenV1 is
         notBlocklisted(to)
         returns (bool)
     {
-        require(
-            value <= allowed[from][msg.sender],
-            "ERC20: transfer amount exceeds allowance"
-        );
+        uint256 _allowed = allowed[from][msg.sender];
+        if (_allowed != type(uint256).max) {
+            require(_allowed >= value, "FiatToken: transfer amount exceeds allowance");
+            allowed[from][msg.sender] = _allowed - value;
+        }
         _transfer(from, to, value);
-        allowed[from][msg.sender] = allowed[from][msg.sender] - value;
         return true;
     }
 
@@ -306,14 +335,15 @@ contract FiatTokenV1 is
         address to,
         uint256 value
     ) internal override {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
+        require(from != address(0), "FiatToken: transfer from the zero address");
+        require(to != address(0), "FiatToken: transfer to the zero address");
+        uint256 _balances = balances[from];
         require(
-            value <= balances[from],
-            "ERC20: transfer amount exceeds balance"
+            value <= _balances,
+            "FiatToken: transfer amount exceeds balance"
         );
 
-        balances[from] = balances[from] - value;
+        balances[from] = _balances - value;
         balances[to] = balances[to] + value;
         emit Transfer(from, to, value);
     }
@@ -327,7 +357,7 @@ contract FiatTokenV1 is
     function configureMinter(address minter, uint256 minterAllowedAmount)
         external
         whenNotPaused
-        onlyMasterMinter
+        onlyMinterAdmin
         returns (bool)
     {
         minters[minter] = true;
@@ -343,7 +373,7 @@ contract FiatTokenV1 is
      */
     function removeMinter(address minter)
         external
-        onlyMasterMinter
+        onlyMinterAdmin
         returns (bool)
     {
         minters[minter] = false;
@@ -374,13 +404,13 @@ contract FiatTokenV1 is
         emit Transfer(msg.sender, address(0), _amount);
     }
 
-    function updateMasterMinter(address _newMasterMinter) external onlyOwner {
+    function updateMinterAdmin(address _newMinterAdmin) external onlyOwner {
         require(
-            _newMasterMinter != address(0),
-            "FiatToken: new masterMinter is the zero address"
+            _newMinterAdmin != address(0),
+            "FiatToken: new minterAdmin is the zero address"
         );
-        masterMinter = _newMasterMinter;
-        emit MasterMinterChanged(masterMinter);
+        minterAdmin = _newMinterAdmin;
+        emit MinterAdminChanged(minterAdmin);
     }
 
     /**
@@ -442,11 +472,12 @@ contract FiatTokenV1 is
         address spender,
         uint256 decrement
     ) internal override {
+        uint256 _allowed = allowed[owner][spender];
         require(
-            decrement <= allowed[owner][spender],
-            "ERC20: decreased allowance below zero"
+            decrement <= _allowed,
+            "FiatToken: decreased allowance below zero"
         );
-        _approve(owner, spender, allowed[owner][spender] - decrement);
+        _approve(owner, spender, _allowed - decrement);
     }
 
     /**

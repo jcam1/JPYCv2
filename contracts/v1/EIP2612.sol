@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2018-2020 CENTRE SECZ
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +28,15 @@ pragma solidity 0.8.11;
 import "./AbstractFiatTokenV1.sol";
 import "./EIP712Domain.sol";
 import "../util/EIP712.sol";
+
+/**
+ * @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v2/EIP2612.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Make domain separator dynamic by adding function: domainSeparatorV4
+ * 3. Add gap
+ * 4. Change now to block.timestamp
+ */
 
 /**
  * @title EIP-2612

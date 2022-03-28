@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2018-2020 CENTRE SECZ
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +30,16 @@ import "./EIP712Domain.sol";
 import "../util/EIP712.sol";
 
 /**
+ * @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v2/EIP3009.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Make domain separator dynamic by adding function: domainSeparatorV4
+ * 3. Change _authorizationStates to uint256 for gas optimization
+ * 4. Change now to block.timestamp
+ * 5. Add gap
+ */
+
+/**
  * @title EIP-3009
  * @notice Provide internal implementation for gas-abstracted transfers
  * @dev Contracts that inherit from this must wrap these with publicly
@@ -50,7 +61,7 @@ abstract contract EIP3009 is AbstractFiatTokenV1, EIP712Domain {
     /**
      * @dev authorizer address => nonce => bool (true if nonce is used)
      */
-    mapping(address => mapping(bytes32 => bool)) private _authorizationStates;
+    mapping(address => mapping(bytes32 => uint256)) private _authorizationStates;
 
     event AuthorizationUsed(address indexed authorizer, bytes32 indexed nonce);
     event AuthorizationCanceled(
@@ -71,7 +82,7 @@ abstract contract EIP3009 is AbstractFiatTokenV1, EIP712Domain {
         view
         returns (bool)
     {
-        return _authorizationStates[authorizer][nonce];
+        return _authorizationStates[authorizer][nonce] == 1;
     }
 
     /**
@@ -190,7 +201,7 @@ abstract contract EIP3009 is AbstractFiatTokenV1, EIP712Domain {
             "EIP3009: invalid signature"
         );
 
-        _authorizationStates[authorizer][nonce] = true;
+        _authorizationStates[authorizer][nonce] = 1;
         emit AuthorizationCanceled(authorizer, nonce);
     }
 
@@ -204,7 +215,7 @@ abstract contract EIP3009 is AbstractFiatTokenV1, EIP712Domain {
         view
     {
         require(
-            !_authorizationStates[authorizer][nonce],
+            _authorizationStates[authorizer][nonce] == 0,
             "EIP3009: authorization is used or canceled"
         );
     }
@@ -224,7 +235,7 @@ abstract contract EIP3009 is AbstractFiatTokenV1, EIP712Domain {
     ) private view {
         require(
             block.timestamp > validAfter,
-            "FEIP3009: authorization is not yet valid"
+            "EIP3009: authorization is not yet valid"
         );
         require(
             block.timestamp < validBefore,
@@ -241,7 +252,7 @@ abstract contract EIP3009 is AbstractFiatTokenV1, EIP712Domain {
     function _markAuthorizationAsUsed(address authorizer, bytes32 nonce)
         private
     {
-        _authorizationStates[authorizer][nonce] = true;
+        _authorizationStates[authorizer][nonce] = 1;
         emit AuthorizationUsed(authorizer, nonce);
     }
 

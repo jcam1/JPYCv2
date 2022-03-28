@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2018-2020 CENTRE SECZ
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +26,15 @@
 pragma solidity 0.8.11;
 
 import "../util/IERC20.sol";
+
+/**
+ * @notice base abstract contract to inherit IERC20
+ * @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v1/AbstractFiatTokenV1.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Add gap
+ * 3. Add functions: _increaseAllowance & _decreaseAllowance
+ */
 
 abstract contract AbstractFiatTokenV1 is IERC20 {
     function _approve(
@@ -50,4 +60,6 @@ abstract contract AbstractFiatTokenV1 is IERC20 {
         address spender,
         uint256 decrement
     ) internal virtual;
+
+    uint256[50] private __gap;
 }

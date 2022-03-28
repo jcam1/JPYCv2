@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: MIT
  *
  * Copyright (c) 2018-2020 CENTRE SECZ
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,28 +27,27 @@ pragma solidity 0.8.11;
 
 import "./Ownable.sol";
 import "../util/IERC20.sol";
-import "../util/SafeERC20.sol";
+
+/**
+ * @notice Base contract which allows children to rescue tokens mistakenly sent to the contract
+* @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v1.1/Rescuable.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Set state variable rescuer to public
+ * 3. Do not use safeTransfer
+ */
 
 contract Rescuable is Ownable {
-    using SafeERC20 for IERC20;
 
-    address private _rescuer;
+    address public rescuer;
 
     event RescuerChanged(address indexed newRescuer);
-
-    /**
-     * @notice Returns current rescuer
-     * @return Rescuer's address
-     */
-    function rescuer() external view returns (address) {
-        return _rescuer;
-    }
 
     /**
      * @notice Revert if called by any account other than the rescuer.
      */
     modifier onlyRescuer() {
-        require(msg.sender == _rescuer, "Rescuable: caller is not the rescuer");
+        require(msg.sender == rescuer, "Rescuable: caller is not the rescuer");
         _;
     }
 
@@ -62,7 +62,7 @@ contract Rescuable is Ownable {
         address to,
         uint256 amount
     ) external onlyRescuer {
-        tokenContract.safeTransfer(to, amount);
+        tokenContract.transfer(to, amount);
     }
 
     /**
@@ -74,7 +74,7 @@ contract Rescuable is Ownable {
             newRescuer != address(0),
             "Rescuable: new rescuer is the zero address"
         );
-        _rescuer = newRescuer;
+        rescuer = newRescuer;
         emit RescuerChanged(newRescuer);
     }
 

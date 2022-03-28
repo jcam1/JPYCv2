@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (proxy/Proxy.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.11;
 
 /**
  * @dev This abstract contract provides a fallback function that delegates all calls to another contract using the EVM

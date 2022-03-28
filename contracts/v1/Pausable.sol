@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2016 Smart Contract Solutions, Inc.
  * Copyright (c) 2018-2020 CENTRE SECZ0
+ * Copyright (c) 2022 JPYC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +29,13 @@ pragma solidity 0.8.11;
 import "./Ownable.sol";
 
 /**
+* @dev Forked from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/feb665136c0dae9912e08397c1a21c4af3651ef3/contracts/lifecycle/Pausable.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Do not set initial value of paused
+ */
+
+/**
  * @notice Base contract which allows children to implement an emergency stop
  * mechanism
  * @dev Forked from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/feb665136c0dae9912e08397c1a21c4af3651ef3/contracts/lifecycle/Pausable.sol
@@ -46,7 +54,7 @@ contract Pausable is Ownable {
     event PauserChanged(address indexed newAddress);
 
     address public pauser;
-    bool public paused = false;
+    bool public paused;
 
     /**
      * @dev Modifier to make a function callable only when the contract is not paused.

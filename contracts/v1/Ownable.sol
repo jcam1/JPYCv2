@@ -3,7 +3,13 @@
 
 pragma solidity 0.8.11;
 
-import "../util/Context.sol";
+/**
+ * @dev Forked from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4961a51cc736c7d4aa9bd2e11e4cbbaff73efee9/contracts/access/Ownable.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ * 2. Delete function renounceOwnership
+ * 3. Do not inherit Context
+ */
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -17,7 +23,7 @@ import "../util/Context.sol";
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract Ownable is Context {
+abstract contract Ownable {
     address private _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -26,7 +32,7 @@ abstract contract Ownable is Context {
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
     constructor() {
-        _transferOwnership(_msgSender());
+        _transferOwnership(msg.sender);
     }
 
     /**
@@ -40,7 +46,7 @@ abstract contract Ownable is Context {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        require(owner() == msg.sender, "Ownable: caller is not the owner");
         _;
     }
 

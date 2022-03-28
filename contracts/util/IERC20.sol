@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.0 (token/ERC20/IERC20.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.11;
 
+/**
+ * @dev Forked from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/4961a51cc736c7d4aa9bd2e11e4cbbaff73efee9/contracts/token/ERC20/IERC20.sol
+ * Modifications:
+ * 1. Change solidity version to 0.8.11
+ */
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
