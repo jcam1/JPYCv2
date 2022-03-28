@@ -22,7 +22,7 @@ In light of the current condition, we were hesitating between UUPS parxy and Tra
 - Higher flexibility for upgradeability
 - Recommended by openzeppelin team
 
-Although on the way to make this decision, we have considered about other options like Transparent proxy patterns and EIP2535.
+Although on the way to make this decision, we have considered about other options like Transparent proxy patterns and EIP2535, our conclusion is to use the UUPS upgradeable pattern.
 
 ### UUPS(EIP1822) Proxy Pattern
 https://eips.ethereum.org/EIPS/eip-1822
