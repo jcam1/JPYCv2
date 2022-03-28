@@ -142,7 +142,6 @@ The contract uses v, r and s to recover the address and verify that it matches t
 - We used `ERC1967Upgradeable.sol`’s code, but it is used partially because we selected UUPS upgradeable pattern. Functions like Beacon or Transparent pattern’s parts are not used in the current situation. We removed the unused parts.
 
 ## Roles
-
 ### Pauser
 If we determines that all users of JPYC are likely to be disadvantaged, we will suspend the functions related to the transmission of JPYC.
 
