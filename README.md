@@ -1,11 +1,13 @@
 # JPYC protocol's Overview
 
 ## Motivation
-We have a working protocol at the moment and to avoid confusion here we call it as the "previous JPYC". The "previous JPYC" is an ERC20 compatible token but it lacks some functionalities, e.g. upgradeability, etc for our current situation. We've made a decision to deploy JPYC protocol, with totally new smart contracts, for us to be ready to move on into the web3.0 world. 
+We have a working protocol at the moment and to avoid confusion here we call it as the "previous JPYC". The "previous JPYC" is an ERC20 compatible token but it lacks some functionalities, e.g. upgradeability, pausability or blacklistability, etc for our current situation. We've made a decision to deploy JPYC protocol, with totally new smart contracts, for us to be ready to move on into the web3.0 world. 
 
 Previous JPYC's information, white paper, and more can be found [here](https://jpyc.jp). 
 ## Brief introduction
-JPYC protocol is an ERC20 compatible token. It allows minting of tokens by multiple entities, pausing all activity, freezing of individual addresses, rescuing of tokens and UUPS proxy pattern to upgrade the contract so that bugs can be fixed or features added. 
+What is JPYC v2? 
+
+JPYC v2 protocol is an ERC20 compatible token. It allows minting of tokens by multiple entities, pausing all activity, freezing of individual addresses, rescuing of tokens and UUPS proxy pattern to upgrade the contract so that bugs can be fixed or features added. 
 
 ## Protocol's architecture
 ![contractArchitecture](contractArchitecture.drawio.svg)
@@ -31,7 +33,7 @@ https://eips.ethereum.org/EIPS/eip-1822
 - Proxies    
 UUPS proxies are implemented using an `ERC1967Proxy`. The proxy is not upgradeable by itself. It delegates calls to implementation contract.
 - Implementation    
-UUPS's implementation includes the `upgradeTo` function by inheritting `UUPSUpgradeable`   contract. Then we can upgrade the implementation contract by calling the `upgradeTo` function.
+UUPS's implementation includes the `upgradeTo` function by inheritting `UUPSUpgradeable`   contract. Then we can upgrade the implementation contract by calling the `upgradeTo` or `upgradeToAndCall` function.
 
 ### Explanation of UUPS contract
 https://github.com/OpenZeppelin/openzeppelin-contracts/tree/master/contracts/proxy
@@ -41,7 +43,15 @@ We adopted openzeppelin's library to implement the UUPS upgradeable pattern. The
 #### Proxy.sol
 - This contract provides a `_fallback` function that delegates all calls from proxy contract to implementation contract using `_delegate` function. The virtual `_implementation` function needs to be overrode. 
 #### UUPSUpgradeable.sol
-This is an upgradeability mechanism designed for UUPS proxies. The contract is inherited by the implemetation contract(`FiatTokenV1`). By inheriting this contract, implementation contract acquires upgradeability. 
+This is an upgradeability mechanism designed for UUPS proxies. The contract is inherited by the implemetation contract(`FiatTokenV1.sol`). By inheriting this contract, implementation contract(`FiatTokenV1.sol`) acquires upgradeability. 
+
+``` 
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyOwner
+    {}
+```
 
 We want to note that the `_authorizeUpgrade` function must be overrode by the implementation contract. we have done that and set the access right `onlyOwner`.
 
@@ -132,6 +142,15 @@ The contract uses v, r and s to recover the address and verify that it matches t
 
 ### Note
 - We used `ERC1967Upgradeable.sol`’s code, but it is used partially because we selected UUPS upgradeable pattern. Functions like Beacon or Transparent pattern’s parts are not used in the current situation. We removed the unused parts.
+
+## Contracts Address
+> Contracts on Avalanche   
+> Proxy
+https://snowtrace.io/address/0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB#code
+Implementation
+https://snowtrace.io/address/0xf2fab05f26dc8da5a3f24d015fb043db7a8751cf#code
+MinterAdmin
+https://snowtrace.io/address/0xc6b1dc6c9ff85e968527f5c755fc07253a084247#code
 
 ## 📝 License
 
