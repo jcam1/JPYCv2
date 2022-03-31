@@ -96,10 +96,24 @@ The contract uses the `safeTransfer` function.
 https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md  
 The contract stores EIP712 Domain Separator. If the chain ID is different, it will be recalculated.
 EIP3009 and EIP2612 require EIP712 Domain.
+
+#### EIP2612.sol
+https://eips.ethereum.org/EIPS/eip-2612  
+A contract that enables transferring of fungible assets via a signed authorization. 
+The contract uses v, r and s to recover the address and verify that it matches the authorizer.
+- nonces
+  - There is a `nonce` for each user, and the same `nonce` cannot be used twice.
+  - The `nonce` increases one by one.
+- _permit
+  - It checks if `block.time` is valid.
+  - If the recoverd address matches The owner, `_approve` is called.
+
 #### EIP3009.sol
 https://eips.ethereum.org/EIPS/eip-3009  
 A contract that enables transferring of fungible assets via a signed authorization. 
 The contract uses v, r and s to recover the address and verify if it matches the owner.
+
+What is different from EIP2612 is EIP3009 uses a random nounce instead of sequencial nonce. It allows users to give several parties allowances at time without having to worry about their transactions will fail.
 
 - `authorizationState`
   - There is a nonce for each user, and the same nonce cannot be used again.
@@ -115,16 +129,6 @@ The contract uses v, r and s to recover the address and verify if it matches the
   - It checks if block.time is valid.
 - `_markAuthorizationAsUsed`
   - It makes the nonce used and emits an event.
-#### EIP2612.sol
-https://eips.ethereum.org/EIPS/eip-2612  
-A contract that enables transferring of fungible assets via a signed authorization. 
-The contract uses v, r and s to recover the address and verify that it matches the authorizer.
-- nonces
-  - There is a `nonce` for each user, and the same `nonce` cannot be used twice.
-  - The `nonce` increases one by one.
-- _permit
-  - It checks if `block.time` is valid.
-  - If the recoverd address matches The owner, `_approve` is called.
 
 #### FiatTokenV1
 - Manages the access rights of the minterAdmin.
@@ -165,9 +169,11 @@ Under the example circumstances below, pauser should pause the JPYC smart contra
 > Contracts on Avalanche   
 > Proxy
 https://snowtrace.io/address/0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB#code
-Implementation
+
+> Implementation
 https://snowtrace.io/address/0xf2fab05f26dc8da5a3f24d015fb043db7a8751cf#code
-MinterAdmin
+
+> MinterAdmin
 https://snowtrace.io/address/0xc6b1dc6c9ff85e968527f5c755fc07253a084247#code
 
 ## 📝 License

@@ -86,16 +86,39 @@ EIP712のDomain Separatorを保存している。Chain IDが異なる場合、�
 
 https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
 
+#### EIP2612.sol
+署名による権限の移譲でファンジブルなトークンを送付することを可能にしたもの。コントラクトはv、rまたはsを使ってアドレスを回復させてアドレス所有者であることの確認を取っている。
+
+- nouces
+  - ユーザーごとに`nonce`がある。同じ`nonce`は一度しか使えない。nonceは順番に増える
+  - `block.time`の確認をする
+  - 復元アドレスはownerと同じであれば`_approve`をする
+
+https://eips.ethereum.org/EIPS/eip-2612
 
 #### EIP3009.sol
 署名による権限の移譲でファンジブルなトークンを送付することを可能にしたもの。コントラクトはv、rまたはsを使ってアドレスを回復させてアドレス所有者であることの確認を取っている。
 
+EIP2612との違いはnonceは順番に増えていく形式ではなくランダムに生成されるので、トランザクションが失敗する心配がなく複数の権限移譲が可能。
+
+- `authorizationState`
+  - ユーザーごとに`nonce`がある。同じ`nonce`は一度しか使えない
+  - nonceはランダムに生成
+- `_transferWithAuthorization`
+- `_receiveWithAuthorization`
+  - 宛先のアドレスは`msg.sender`でなければならない
+- `_cancelAuthorization`
+  - `nonce`を無効にする
+- `_requireUnusedAuthorization`
+  - `nonce`が使われたかをチェック
+- `_requireValidAuthorization`
+  - `block.time`をチェックする
+- `_markAuthorizationAsUsed`
+  - `nonce`を使用済みにしてeventを放出
+
 https://eips.ethereum.org/EIPS/eip-3009
 
-#### EIP2612.sol
-署名情報によるapproveを可能にし、トークンの移動ができるようになる。
 
-https://eips.ethereum.org/EIPS/eip-2612
 
 #### FiatTokenV1
 JPYC v2のImplementation contract。
@@ -135,9 +158,11 @@ JPYC v2には新しい機能のPausability, Blocklistabilityが存在し、そ�
 - Contracts on Avalanche   
 > Proxy
 https://snowtrace.io/address/0x431D5dfF03120AFA4bDf332c61A6e1766eF37BDB#code
-Implementation
+
+> Implementation
 https://snowtrace.io/address/0xf2fab05f26dc8da5a3f24d015fb043db7a8751cf#code
-MinterAdmin
+
+> MinterAdmin
 https://snowtrace.io/address/0xc6b1dc6c9ff85e968527f5c755fc07253a084247#code
 
 ## 📝 License
