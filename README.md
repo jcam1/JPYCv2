@@ -140,6 +140,24 @@ The contract uses v, r and s to recover the address and verify that it matches t
 - It allows only users who are allowlisted to send or approve over 100,000 token to other user.
 - Other than that everything is the same as FiatTokenV1.
 
+## Roles
+Among JPYC v2's functinalities, there are Pausability and Blocklistability. And JPYC.Inc is in charge of the roles of Pauser and Blocklister. Pauser and blocklister are able to pause or unpause JPYC smart contracts, blocklist or unblocklist a certain address respectively.
+
+You may wonder under what kind of circumstances, these functions will be used? 
+### Pauser
+- pauser is a role who controls the functionality of pausing the contract.
+
+If the board of JPYC.Inc find out that all users' benefits will likely be harmed, JPYC.Inc will pause the functions related to the transfer, approve, mint, etc of JPYC token.
+
+Under the example circumstances below, pauser should pause the JPYC smart contracts.
+- When the private key of an address which is authorized to execute the critical functions of JPYC smart contracts is compromised.
+- When a critical bug is discovered in the JPYC smart contracts.
+
+### Blocklister
+- Blocklister is a role who controls the functionality of blocklisting.
+- JPYC.Inc completely comply with the local regulations. If the board of JPYC.Inc finds out that an address may be involved in a crime, the related addresses will get freezed to avoid further damage to the users and communities.
+- Unblocklisting a certain address will be determined by the board of JPYC.Inc as well.
+
 ### Note
 - We used `ERC1967Upgradeable.sol`’s code, but it is used partially because we selected UUPS upgradeable pattern. Functions like Beacon or Transparent pattern’s parts are not used in the current situation. We removed the unused parts.
 
