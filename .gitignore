@@ -1,0 +1,9 @@
+/node_modules
+/build
+/artifacts
+/cache
+.env
+coverage.json
+/coverage
+/gasEstimate
+/.VSCoderCounter
