@@ -6,7 +6,7 @@
 JPYC v2のことを一言でまとめる、**JPYC v2はERC20トークンであり、複数のエンティティによる通貨発行ができたり、コントラクトの一時停止ができたり、特定アカウントのブロックできたり、当該コントラクトに誤送信されたトークンの引き出しができたり、バグの修正あるいは機能を追加するためにスマートコントラクトのアップグレードができたりするプロトコルとなっている**。
 
 ## プロトコルの構造
-![contractArchitecture](contractArchitecture.drawio.svg)
+![contractArchitecture](../contractArchitecture.drawio.svg)
 
 ## Solidityバージョン
 Solidityのバージョンについては、`pragma solidity 0.8.11`を使用している。
