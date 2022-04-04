@@ -1,4 +1,4 @@
-# JPYC protocol's Overview
+# Overview of JPYC as a Stablecoin protocol
 
 ## Motivation
 We have a working protocol at the moment and to avoid confusion here we call it as the "previous JPYC". The "previous JPYC" is an ERC20 compatible token but it lacks some functionalities, e.g. upgradeability, pausability or blacklistability, etc for our current situation. We've made a decision to deploy JPYC protocol, with totally new smart contracts, for us to be ready to move on into the web3.0 world.
