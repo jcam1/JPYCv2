@@ -126,10 +126,6 @@ contract('FiatTokenV1_1', function (accounts) {
     expect(await this.token.rescuer()).to.equal(rescuer)
   })
 
-  it('has a version', async function () {
-    expect(await this.token.version()).to.be.bignumber.equal('1')
-  })
-
   // 直接呼び出せないのでFiatTokenV1を継承したmockを使用
   it('_approve test', async function () {
     const tokenTest = await FiatTokenV1_1Test.new()

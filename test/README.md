@@ -398,6 +398,7 @@
   - domain separator(v1/EIP3009.behavior.js)
 - add list below
   - DOMAIN_SEPARATOR(v1_1/EIP712Domain.behavior.js)
+  - version(v1_1/EIP712Domain.behavior.js)
 
 ## v1_1 proxy
 - all test of v1_1 except the list below

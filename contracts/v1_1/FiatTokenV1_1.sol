@@ -68,7 +68,7 @@ contract FiatTokenV1_1 is
     uint256 internal totalSupply_;
     address public minterAdmin;
     uint8 public decimals;
-    uint8 public version;
+    uint8 internal initializedVersion;
 
     mapping(address => uint256) internal balances;
     mapping(address => mapping(address => uint256)) internal allowed;
@@ -93,7 +93,7 @@ contract FiatTokenV1_1 is
         address newOwner
     ) public {
         require(
-            version == 0,
+            initializedVersion == 0,
             "FiatToken: contract is already initialized"
         );
         require(
@@ -127,11 +127,11 @@ contract FiatTokenV1_1 is
         rescuer = newRescuer;
         _transferOwnership(newOwner);
         blocklisted[address(this)] = 1;
-        _CACHED_DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(tokenName, "1");
-        _CACHED_CHAIN_ID = block.chainid;
-        _CACHED_NAME = tokenName;
-        _CACHED_VERSION = "1";
-        version = 1;
+        CACHED_DOMAIN_SEPARATOR = EIP712.makeDomainSeparator(tokenName, "1");
+        CACHED_CHAIN_ID = block.chainid;
+        CACHED_NAME = tokenName;
+        CACHED_VERSION = "1";
+        initializedVersion = 1;
     }
 
     /**

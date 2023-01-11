@@ -44,24 +44,35 @@ contract EIP712Domain {
     /**
      * @dev EIP712 Domain Separator
      */
-    bytes32 internal _CACHED_DOMAIN_SEPARATOR;
-    uint256 internal _CACHED_CHAIN_ID;
-    string internal _CACHED_NAME;
-    string internal _CACHED_VERSION;
+    bytes32 internal CACHED_DOMAIN_SEPARATOR;
+    uint256 internal CACHED_CHAIN_ID;
+    string internal CACHED_NAME;
+    string internal CACHED_VERSION;
 
     /**
     * @dev Returns the domain separator for the current chain.
     */
     function _domainSeparatorV4() internal view returns (bytes32) {
-        if(block.chainid == _CACHED_CHAIN_ID) {
-            return _CACHED_DOMAIN_SEPARATOR;
+        if(block.chainid == CACHED_CHAIN_ID) {
+            return CACHED_DOMAIN_SEPARATOR;
         } else {
-            return EIP712.makeDomainSeparator(_CACHED_NAME, _CACHED_VERSION);
+            return EIP712.makeDomainSeparator(CACHED_NAME, CACHED_VERSION);
         }
     }
 
+    /**
+    * @dev EIP712 Domain Separator
+    */
     function DOMAIN_SEPARATOR() external view returns(bytes32) {
         return _domainSeparatorV4();
+    }
+
+    /**
+    * @notice Version string for the EIP712 domain separator
+    * @return Version string
+    */
+    function version() external view returns (string memory) {
+        return CACHED_VERSION;
     }
 
     uint256[50] private __gap;

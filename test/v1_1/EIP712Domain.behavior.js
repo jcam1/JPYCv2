@@ -14,11 +14,15 @@ function shouldBehaveLikeEIP712Domain(
     this.chainId = 1337 // hardhat.confing.js
   })
 
-  it('expected proxiableUUID _IMPLEMENTATION_SLOT', async function () {
+  it('has a DOMAIN_SEPARATOR', async function () {
     const expectedDomainSeparator = await domainSeparator(name, version, this.chainId, this.token.address);
     expect(
       await this.token.DOMAIN_SEPARATOR()
     ).to.equal(expectedDomainSeparator);
+  })
+
+  it('has a version', async function () {
+    expect(await this.token.version()).to.equal(version)
   })
 }
 
