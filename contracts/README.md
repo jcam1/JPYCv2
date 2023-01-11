@@ -16,6 +16,7 @@
 - ERC20.sol @openzepplin + v0.8.11
   - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
 - FiatTokenV1Test.sol @original + v0.8.11
+- FiatTokenV1_1Test.sol @original + v0.8.11
 - FiatTokenV2Test.sol @original + v0.8.11
 - IERC20Metadata.sol @openzeppelin + v0.8.11
   - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/IERC20Metadata.sol
@@ -69,6 +70,15 @@
   - https://github.com/centrehq/centre-tokens/blob/master/contracts/v1/Pausable.sol
 - Rescuable.sol @centre-tokens + v0.8.11 + gap
   - https://github.com/centrehq/centre-tokens/blob/master/contracts/v1.1/Rescuable.sol
+
+## v1_1
+- EIP712Domain.sol @fork-centre-tokens + v0.8.11 + gap
+  - https://github.com/centrehq/centre-tokens/blob/master/contracts/v2/EIP712Domain.sol
+- EIP2612.sol @centre-tokens + v0.8.11 + gap
+  - https://github.com/centrehq/centre-tokens/blob/master/contracts/v2/EIP2612.sol
+- EIP3009.sol @centre-tokens + v0.8.11 + gap
+  - https://github.com/centrehq/centre-tokens/blob/master/contracts/v2/EIP3009.sol
+- FiatTokenV1_1.sol @original + v0.8.11 
 
 ## v2
 - FiatTokenV2.sol @original + v0.8.11 

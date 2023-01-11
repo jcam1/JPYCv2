@@ -18,6 +18,7 @@ const { EIP3009TransferMake } = require('../helpers/EIP3009Maker')
 
 const FiatTokenProxy = artifacts.require('ERC1967Proxy')
 const FiatTokenV1 = artifacts.require('FiatTokenV1')
+const FiatTokenV1_1 = artifacts.require('FiatTokenV1_1')
 const FiatTokenV2 = artifacts.require('FiatTokenV2')
 
 const { EIP712Domain, domainSeparator } = require('../helpers/eip712');
@@ -60,6 +61,12 @@ function usesOriginalStorageSlotPositions({ version, accounts }) {
       )
 
       proxyAsFiatToken = await FiatTokenV1.at(proxy.address)
+
+      if (version == 1.1) {
+        fiatToken = await FiatTokenV1_1.new()
+        await proxyAsFiatToken.upgradeTo(fiatToken.address, { from: owner })
+        proxyAsFiatToken = await FiatTokenV1_1.at(proxy.address);
+      }
 
       if (version == 2) {
         fiatToken = await FiatTokenV2.new()
