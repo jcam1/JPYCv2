@@ -30,9 +30,11 @@ import "../util/EIP712.sol";
  * @dev Forked from https://github.com/centrehq/centre-tokens/blob/37039f00534d3e5148269adf98bd2d42ea9fcfd7/contracts/v2/EIP712Domain.sol
  * Modifications:
  * 1. Change solidity version to 0.8.11
- * 2. Add 4 new state variables: DOMAIN_SEPARATOR, CHAIN_ID, NAME, VERSION
- * 3. Add new function _domainSeparatorV4
- * 4. Add gap
+ * 2. remove state variable: DOMAIN_SEPARATOR
+ * 3. Add 4 new state variables: _CACHED_DOMAIN_SEPARATOR, _CACHED_CHAIN_ID, _CACHED_NAME, _CACHED_VERSION
+ * 4. Add new function _domainSeparatorV4
+ * 5. Add new function DOMAIN_SEPARATOR
+ * 6. Add gap
  */
 
 /**

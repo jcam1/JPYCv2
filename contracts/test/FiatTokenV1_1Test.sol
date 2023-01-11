@@ -1,5 +1,3 @@
-
-   
 /**
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +24,9 @@
 
 pragma solidity 0.8.11;
 
-import "../v1/FiatTokenV1.sol";
+import "../v1_1/FiatTokenV1_1.sol";
 
-contract FiatTokenV1Test is FiatTokenV1 {
+contract FiatTokenV1_1Test is FiatTokenV1_1 {
    function approveTest(address owner, address spender, uint256 value) external {
        _approve(owner, spender, value);
    }

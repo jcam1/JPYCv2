@@ -32,6 +32,7 @@
 
 ### storageSlot.test.js
 - v1
+- v1_1(upgraded)
 - v2(upgraded)
 
 ### storageSlot.behavior.js
@@ -388,4 +389,16 @@
 - reject upgradeToAndCall not through delegatecall
 
 ## v1_proxy test
-- all test of v1
+- all test of v1 except the list below
+  - shouldBehaveLikeUUPSUpgradeable
+
+## v1_1 test
+- all test of v1 except the list below
+  - domain separator(v1/EIP2612.behavior.js)
+  - domain separator(v1/EIP3009.behavior.js)
+- add list below
+  - DOMAIN_SEPARATOR(v1_1/EIP712Domain.behavior.js)
+
+## v1_1 proxy
+- all test of v1_1 except the list below
+  - shouldBehaveLikeUUPSUpgradeable
